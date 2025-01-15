@@ -1,1 +1,1 @@
-![Mockup V1](https://share.balsamiq.com/c/cVzmG7eWt6YMT6Lo185bpS.jpg)
+![Mockup V1](https://i.ibb.co/QYhgpn7/Mockup-13-11-2024.jpg)
