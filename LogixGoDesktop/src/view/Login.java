@@ -5,6 +5,8 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -12,8 +14,11 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
+
+import controller.DBManagement;
 import utils.ComponentsGenerator;
 import utils.Constants;
+import utils.Helper;
 import utils.LayoutComponents;
 
 public class Login extends JFrame implements ActionListener {
@@ -21,14 +26,10 @@ public class Login extends JFrame implements ActionListener {
 	private Container c;
 	private JLabel title;
 	private JPanel mainPanel;
-	private JLabel email;
 	private JTextField temail;
-	private JLabel password;
 	private JPasswordField tpassword;
 	private JButton login;
-	private JLabel or;
 	private JButton signup;
-	
 
 	static int screen_width = Constants.screen_width;
 	static int screen_height = Constants.screen_height;
@@ -36,6 +37,9 @@ public class Login extends JFrame implements ActionListener {
 	static int main_panel_height = (int) (screen_height * 0.45);
 	static int entry_layout_height = Constants.entry_layout_height;
 	static int y_start_margin = 90;
+
+	DBManagement db = new DBManagement();
+	Helper helper = new Helper();
 
 	public Login() {
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -60,38 +64,76 @@ public class Login extends JFrame implements ActionListener {
 		c.add(mainPanel);
 
 		ComponentsGenerator componentsGenerator = new ComponentsGenerator(main_panel_width, entry_layout_height);
-		
+
 		LayoutComponents emailComponents = componentsGenerator.createEntryLayout("Email: ", 0.4, 0.6, false);
 		mainPanel.add(emailComponents.panel);
-		email = emailComponents.label;
 		temail = emailComponents.textField;
-		
+
 		LayoutComponents passwordComponents = componentsGenerator.createEntryLayout("Password: ", 0.4, 0.6, true);
 		mainPanel.add(passwordComponents.panel);
-		password = passwordComponents.label;
 		tpassword = passwordComponents.passwordField;
-		
-		LayoutComponents loginComponents = componentsGenerator.createButtonLayout("Login", 0.4, 0.6, 0.6, true, 10, -15);
+
+		LayoutComponents loginComponents = componentsGenerator.createButtonLayout("Login", 0.4, 0.6, 0.6, true, 10,
+				-15);
 		mainPanel.add(loginComponents.panel);
 		login = loginComponents.button;
 		login.addActionListener(this);
-		
-		LayoutComponents orComponents = componentsGenerator.createLabelLayout("-------------- OR --------------", 0.4, 0.6, 1, 0);
+
+		LayoutComponents orComponents = componentsGenerator.createLabelLayout("-------------- OR --------------", 0.4,
+				0.6, 1, 0);
 		mainPanel.add(orComponents.panel);
-		or = orComponents.label;
-		
-		LayoutComponents signupComponents = componentsGenerator.createButtonLayout("Not a member? Sign up", 0.4, 0.6, 1, false, -15, 0);
+
+		LayoutComponents signupComponents = componentsGenerator.createButtonLayout("Not a member? Sign up", 0.4, 0.6, 1,
+				false, -15, 0);
 		mainPanel.add(signupComponents.panel);
 		signup = signupComponents.button;
 		signup.addActionListener(this);
-		
 
 		this.setVisible(true);
 
 	}
-	
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
+
+		if (e.getSource() == login) {
+			String semail = temail.getText();
+			String spassword = tpassword.getText();
+
+			// validate email no entry
+			if (semail.isBlank()) {
+				helper.showErrorMessage(this, "Email is required");
+				return;
+			}
+
+			// validate email correct
+			if (!helper.isValidEmailAddress(semail)) {
+				helper.showErrorMessage(this, "Please enter a valid email address");
+				return;
+			}
+
+			// validate password no entry
+			if (spassword.isBlank()) {
+				helper.showErrorMessage(this, "Password is required");
+				return;
+			}
+
+			int user_id = -1;
+			try {
+				user_id = db.validateEmailAndPassword(semail, spassword);
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+
+			if (user_id == -1) {
+				helper.showErrorMessage(this, "Incorrect email or password");
+				return;
+			}
+
+			this.dispose();
+			new HomePage(user_id);
+
+		}
 
 		if (e.getSource() == signup) {
 			this.dispose();
@@ -100,7 +142,6 @@ public class Login extends JFrame implements ActionListener {
 
 	}
 
-	
 	public static void main(String[] args) {
 		new Login();
 	}

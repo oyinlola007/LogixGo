@@ -6,6 +6,8 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
+
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -15,8 +17,11 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
+
+import controller.DBManagement;
 import utils.ComponentsGenerator;
 import utils.Constants;
+import utils.Helper;
 import utils.LayoutComponents;
 
 public class Signup extends JFrame implements ActionListener {
@@ -25,32 +30,27 @@ public class Signup extends JFrame implements ActionListener {
 	private JLabel title;
 	private JButton back;
 	private JPanel mainPanel;
-	private JLabel first_name;
 	private JTextField tfirst_name;
-	private JLabel last_name;
 	private JTextField tlast_name;
-	private JLabel email;
 	private JTextField temail;
-	private JLabel phone;
 	private JTextField tphone;
-	private JLabel password;
 	private JPasswordField tpassword;
-	private JLabel confirm_password;
 	private JPasswordField tconfirm_password;
-	private JLabel truck_reg_no;
 	private JTextField ttruck_reg_no;
-	private JLabel truck_capacity;
 	private JTextField ttruck_capacity;
 	private JButton signup;
 	private JComboBox<String> role;
-	
-	static String[] options = {"Customer", "Driver", "Scheduler"};
+
+	static String[] options = { "Customer", "Driver", "Scheduler" };
 	static int screen_width = Constants.screen_width;
 	static int screen_height = Constants.screen_height;
 	static int main_panel_width = (int) (screen_width * 0.8);
 	static int main_panel_height = (int) (screen_height * 0.85);
 	static int entry_layout_height = Constants.entry_layout_height;
 	static int y_start_margin = 20;
+
+	DBManagement db = new DBManagement();
+	Helper helper = new Helper();
 
 	public Signup() {
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -66,7 +66,7 @@ public class Signup extends JFrame implements ActionListener {
 		title.setSize(300, 40);
 		title.setLocation((int) ((screen_width - main_panel_width) * 0.5), y_start_margin);
 		c.add(title);
-		
+
 		back = new JButton("Go back");
 		back.setBorderPainted(false);
 		back.setFocusPainted(false);
@@ -78,85 +78,169 @@ public class Signup extends JFrame implements ActionListener {
 		back.setSize(140, 40);
 		back.setLocation((int) (main_panel_width + (0.5 * (screen_width - main_panel_width)) - 140), y_start_margin);
 		c.add(back);
-		
+
 		mainPanel = new JPanel(new GridLayout(10, 1, 0, 0));
 		mainPanel.setBorder(new LineBorder(Constants.border_color, 2));
 		mainPanel.setBackground(Constants.background_color);
 		mainPanel.setLocation((int) ((screen_width - main_panel_width) * 0.5), y_start_margin + title.getHeight() + 10);
 		mainPanel.setSize(main_panel_width, main_panel_height);
 		c.add(mainPanel);
-		
+
 		ComponentsGenerator componentsGenerator = new ComponentsGenerator(main_panel_width, entry_layout_height);
 
 		LayoutComponents first_nameComponents = componentsGenerator.createEntryLayout("First name: ", 0.4, 0.6, false);
 		mainPanel.add(first_nameComponents.panel);
-		first_name = first_nameComponents.label;
 		tfirst_name = first_nameComponents.textField;
-		
+
 		LayoutComponents last_nameComponents = componentsGenerator.createEntryLayout("Last name: ", 0.4, 0.6, false);
 		mainPanel.add(last_nameComponents.panel);
-		last_name = last_nameComponents.label;
 		tlast_name = last_nameComponents.textField;
-		
+
 		LayoutComponents emailComponents = componentsGenerator.createEntryLayout("Email: ", 0.4, 0.6, false);
 		mainPanel.add(emailComponents.panel);
-		email = emailComponents.label;
 		temail = emailComponents.textField;
-		
+
 		LayoutComponents phoneComponents = componentsGenerator.createEntryLayout("Telephone: ", 0.4, 0.6, false);
 		mainPanel.add(phoneComponents.panel);
-		phone = phoneComponents.label;
 		tphone = phoneComponents.textField;
-		
+
 		LayoutComponents passwordComponents = componentsGenerator.createEntryLayout("Password: ", 0.4, 0.6, true);
 		mainPanel.add(passwordComponents.panel);
-		password = passwordComponents.label;
 		tpassword = passwordComponents.passwordField;
 
-		LayoutComponents confirm_passwordComponents = componentsGenerator.createEntryLayout("Confirm Password: ", 0.4, 0.6, true);
+		LayoutComponents confirm_passwordComponents = componentsGenerator.createEntryLayout("Confirm Password: ", 0.4,
+				0.6, true);
 		mainPanel.add(confirm_passwordComponents.panel);
-		confirm_password = confirm_passwordComponents.label;
 		tconfirm_password = confirm_passwordComponents.passwordField;
-		
+
 		LayoutComponents dropdownComponents = componentsGenerator.createDropdownLayout("Role: ", 0.4, 0.6, options);
 		mainPanel.add(dropdownComponents.panel);
 		role = dropdownComponents.dropdown;
-		
-		LayoutComponents truck_reg_noComponents = componentsGenerator.createEntryLayout("Truck registration number: ", 0.4, 0.6, false);
+
+		LayoutComponents truck_reg_noComponents = componentsGenerator.createEntryLayout("Truck registration number: ",
+				0.4, 0.6, false);
 		mainPanel.add(truck_reg_noComponents.panel);
-		truck_reg_no = truck_reg_noComponents.label;
 		ttruck_reg_no = truck_reg_noComponents.textField;
-		
-		LayoutComponents truck_capacityComponents = componentsGenerator.createEntryLayout("Truck capacity (Kg): ", 0.4, 0.6, false);
+		helper.setPanelVisibility(truck_reg_noComponents.panel, false);
+
+		LayoutComponents truck_capacityComponents = componentsGenerator.createEntryLayout("Truck capacity (Kg): ", 0.4,
+				0.6, false);
 		mainPanel.add(truck_capacityComponents.panel);
-		truck_capacity = truck_capacityComponents.label;
 		ttruck_capacity = truck_capacityComponents.textField;
-		
-		LayoutComponents signupComponents = componentsGenerator.createButtonLayout("Sign up", 0.4, 0.6, 0.6, true, 0, - 15);
+		helper.setPanelVisibility(truck_capacityComponents.panel, false);
+
+		LayoutComponents signupComponents = componentsGenerator.createButtonLayout("Sign up", 0.4, 0.6, 0.6, true, 0,
+				-15);
 		mainPanel.add(signupComponents.panel);
 		signup = signupComponents.button;
 		signup.addActionListener(this);
-		
+
+		role.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				String srole = role.getSelectedItem().toString();
+
+				if (srole.equals("Driver")) {
+					helper.setPanelVisibility(truck_reg_noComponents.panel, true);
+					helper.setPanelVisibility(truck_capacityComponents.panel, true);
+				} else {
+					helper.setPanelVisibility(truck_reg_noComponents.panel, false);
+					helper.setPanelVisibility(truck_capacityComponents.panel, false);
+
+					helper.clearField(ttruck_reg_no);
+					helper.clearField(ttruck_capacity);
+				}
+			}
+		});
+
 		this.setVisible(true);
 
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+
+		if (e.getSource() == signup) {
+
+			String sfirst_name = tfirst_name.getText();
+			String slast_name = tlast_name.getText();
+			String semail = temail.getText();
+			String sphone = tphone.getText();
+			String spassword = tpassword.getText();
+			String sconfirm_password = tconfirm_password.getText();
+			String srole = role.getSelectedItem().toString();
+			String struck_reg_no = ttruck_reg_no.getText();
+			String struck_capacity = ttruck_capacity.getText();
+
+			// validate no entry
+			if (sfirst_name.isBlank() || slast_name.isBlank() || semail.isBlank() || sphone.isBlank()
+					|| spassword.isBlank() || sconfirm_password.isBlank() || srole.isBlank() || spassword.isBlank()) {
+				helper.showErrorMessage(this, "Please fill all required fields");
+				return;
+			}
+
+			// validate email correct
+			if (!helper.isValidEmailAddress(semail)) {
+				helper.showErrorMessage(this, "Please enter a valid email address");
+				return;
+			}
+
+			// validate email not exist
+			try {
+				if (db.doesEmailExist(semail)) {
+					helper.showErrorMessage(this, "Email already exists");
+					return;
+				}
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+
+			// validate correct phone
+			if (!Helper.isNumeric(sphone) || (sphone.length() != 10)) {
+				helper.showErrorMessage(this, "Please enter a valid phone number (10 digits only)");
+				return;
+			}
+
+			// validate password match
+			if (!spassword.equals(sconfirm_password)) {
+				helper.showErrorMessage(this, "Passwords do not match");
+				return;
+			}
+
+			if (srole.equals("Driver")) {
+				// validate no entry
+				if (struck_reg_no.isBlank() || struck_capacity.isBlank()) {
+					helper.showErrorMessage(this, "Please enter valid truck details for the Driver role");
+					return;
+				}
+
+				// validate correct phone
+				if (!Helper.isNumeric(struck_capacity)) {
+					helper.showErrorMessage(this, "Please enter a valid truck capacity");
+					return;
+				}
+			}
+
+			try {
+				int user_id = db.insertUser(sfirst_name, slast_name, semail, sphone, spassword, srole);
+				if (srole.equals("Driver")) {
+					db.insertDriver(user_id, struck_reg_no, Integer.parseInt(struck_capacity));
+				}
+
+				this.dispose();
+				new HomePage(user_id);
+
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+
+		}
+
 		if (e.getSource() == back) {
 			this.dispose();
 			new Login();
 		}
 
-		if (e.getSource() == signup) {
-			this.dispose();
-			new UpdateDetails();
-		}
-
-	}
-
-	public static void main(String[] args) {
-		new Signup();
 	}
 
 }
