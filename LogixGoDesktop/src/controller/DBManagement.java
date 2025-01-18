@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import model.Driver;
 import model.User;
@@ -164,6 +166,117 @@ public class DBManagement {
 		System.out.println(rowsUpdated + " row(s) updated in user table for password.");
 
 		conn.close();
+	}
+
+	public String[] getAllProductNames() throws SQLException {
+		Connection conn = createConnection();
+		String sql = "SELECT prd_name FROM product_prd";
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+
+		ResultSet rs = pstmt.executeQuery();
+		List<String> productNames = new ArrayList<>();
+
+		while (rs.next()) {
+			productNames.add(rs.getString("prd_name"));
+		}
+
+		conn.close();
+		return productNames.toArray(new String[0]);
+	}
+
+	public int getProductWeight(String productName) throws SQLException {
+		Connection conn = createConnection();
+		String sql = "SELECT prd_unit_weight FROM product_prd WHERE prd_name = ?";
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		pstmt.setString(1, productName);
+
+		ResultSet rs = pstmt.executeQuery();
+		int weight = -1;
+		if (rs.next()) {
+			weight = rs.getInt("prd_unit_weight");
+		}
+
+		conn.close();
+		return weight;
+	}
+
+	public int getProductIdByName(String productName) throws SQLException {
+		Connection conn = createConnection();
+		String sql = "SELECT prd_id FROM product_prd WHERE prd_name = ?";
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		pstmt.setString(1, productName);
+
+		ResultSet rs = pstmt.executeQuery();
+		int productId = -1;
+		if (rs.next()) {
+			productId = rs.getInt("prd_id");
+		}
+		conn.close();
+		return productId;
+	}
+
+	public void insertDeliveryAndItems(ArrayList<String> selectedProducts, int userId, String deliveryDate,
+			String address1, String address2, String city, String region, String zipCode, String status)
+			throws SQLException {
+		Connection conn = createConnection();
+		conn.setAutoCommit(false); // Begin transaction
+
+		try {
+			// Insert into delivery table
+			String deliverySql = "INSERT INTO delivery_dlv (dlv_usr_id, dlv_date, dlv_address_line_1, dlv_address_line_2, dlv_city, dlv_region, dlv_zip_code, dlv_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+			PreparedStatement deliveryStmt = conn.prepareStatement(deliverySql,
+					PreparedStatement.RETURN_GENERATED_KEYS);
+			deliveryStmt.setInt(1, userId);
+			deliveryStmt.setString(2, deliveryDate);
+			deliveryStmt.setString(3, address1);
+			deliveryStmt.setString(4, address2);
+			deliveryStmt.setString(5, city);
+			deliveryStmt.setString(6, region);
+			deliveryStmt.setString(7, zipCode);
+			deliveryStmt.setString(8, status);
+			deliveryStmt.executeUpdate();
+
+			// Get the generated delivery ID
+			ResultSet rs = deliveryStmt.getGeneratedKeys();
+			int deliveryId = -1;
+			if (rs.next()) {
+				deliveryId = rs.getInt(1);
+			}
+
+			// Insert into delivery_item table
+			String deliveryItemSql = "INSERT INTO delivery_item_dli (dli_delivery_id, dli_product_id, dli_total_weight) VALUES (?, ?, ?)";
+			PreparedStatement deliveryItemStmt = conn.prepareStatement(deliveryItemSql);
+
+			for (String entry : selectedProducts) {
+				String[] parts = entry.split(", ");
+				String productName = parts[0];
+				int quantity = Integer.parseInt(parts[1]);
+
+				int productId = getProductIdByName(productName); // Get product ID
+				if (productId == -1) {
+					throw new SQLException("Product not found: " + productName);
+				}
+
+				int productWeight = getProductWeight(productName); // Get product weight
+				int totalWeight = productWeight * quantity; // Calculate total weight
+
+				deliveryItemStmt.setInt(1, deliveryId);
+				deliveryItemStmt.setInt(2, productId);
+				deliveryItemStmt.setInt(3, totalWeight);
+				deliveryItemStmt.addBatch(); // Batch the inserts for efficiency
+			}
+
+			deliveryItemStmt.executeBatch(); // Execute all batched inserts
+			conn.commit(); // Commit transaction
+			System.out.println("Delivery and items inserted successfully.");
+
+		} catch (SQLException e) {
+			conn.rollback(); // Rollback transaction on failure
+			throw e;
+		} finally {
+			conn.setAutoCommit(true); // Restore default commit behavior
+			conn.close();
+		}
 	}
 
 }

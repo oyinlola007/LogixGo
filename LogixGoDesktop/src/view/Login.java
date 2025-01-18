@@ -20,6 +20,7 @@ import utils.ComponentsGenerator;
 import utils.Constants;
 import utils.Helper;
 import utils.LayoutComponents;
+import utils.SessionManager;
 
 public class Login extends JFrame implements ActionListener {
 
@@ -40,8 +41,15 @@ public class Login extends JFrame implements ActionListener {
 
 	DBManagement db = new DBManagement();
 	Helper helper = new Helper();
+	Integer user_id = SessionManager.getSession();
 
 	public Login() {
+		if (user_id != null) {
+		    System.out.println("Session exists for user: " + user_id);
+		    new HomePage();
+		    return;
+		}
+
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		this.setTitle("LogixGo");
 		setBounds(30, 60, screen_width, screen_height);
@@ -129,9 +137,11 @@ public class Login extends JFrame implements ActionListener {
 				helper.showErrorMessage(this, "Incorrect email or password");
 				return;
 			}
+			
+			SessionManager.saveSession(user_id);
 
 			this.dispose();
-			new HomePage(user_id);
+			new HomePage();
 
 		}
 

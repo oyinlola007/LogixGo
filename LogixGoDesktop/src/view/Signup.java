@@ -23,6 +23,7 @@ import utils.ComponentsGenerator;
 import utils.Constants;
 import utils.Helper;
 import utils.LayoutComponents;
+import utils.SessionManager;
 
 public class Signup extends JFrame implements ActionListener {
 
@@ -226,9 +227,11 @@ public class Signup extends JFrame implements ActionListener {
 				if (srole.equals("Driver")) {
 					db.insertDriver(user_id, struck_reg_no, Integer.parseInt(struck_capacity));
 				}
+				
+				SessionManager.saveSession(user_id);
 
 				this.dispose();
-				new HomePage(user_id);
+				new HomePage();
 
 			} catch (SQLException e1) {
 				e1.printStackTrace();

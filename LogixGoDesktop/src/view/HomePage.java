@@ -1,21 +1,21 @@
 package view;
 
+import controller.DBManagement;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
-
+import java.util.ArrayList;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
-
-import controller.DBManagement;
 import model.User;
 import utils.Constants;
 import utils.Helper;
+import utils.SessionManager;
 
 public class HomePage extends JFrame implements ActionListener {
 
@@ -37,8 +37,9 @@ public class HomePage extends JFrame implements ActionListener {
 
 	DBManagement db = new DBManagement();
 	Helper helper = new Helper();
+	int user_id = SessionManager.getSession();
 
-	public HomePage(int user_id) {
+	public HomePage() {
 		try {
 			user = db.getUserById(user_id);
 		} catch (SQLException e) {
@@ -114,12 +115,23 @@ public class HomePage extends JFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == btn_1) {
+			if (user.getRole().equals("Customer")) {
+				this.dispose();
+				new NewDeliveryProducts(new ArrayList<>());
+			} else if (user.getRole().equals("Driver")) {
+			} else if (user.getRole().equals("Scheduler")) {
+			}
+		}
+		
 		if (e.getSource() == btn_3) {
 			this.dispose();
-			new UpdateDetails(user.getId());
+			new UpdateDetails();
 		}
 
 		if (e.getSource() == logout) {
+			SessionManager.clearSession();
+			
 			this.dispose();
 			new Login();
 		}

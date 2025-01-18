@@ -23,6 +23,7 @@ import utils.ComponentsGenerator;
 import utils.Constants;
 import utils.Helper;
 import utils.LayoutComponents;
+import utils.SessionManager;
 
 public class UpdateDetails extends JFrame implements ActionListener {
 
@@ -49,8 +50,9 @@ public class UpdateDetails extends JFrame implements ActionListener {
 
 	DBManagement db = new DBManagement();
 	Helper helper = new Helper();
+	int user_id = SessionManager.getSession();
 
-	public UpdateDetails(int user_id) {
+	public UpdateDetails() {
 		try {
 			user = db.getUserById(user_id);
 		} catch (SQLException e) {
@@ -205,7 +207,7 @@ public class UpdateDetails extends JFrame implements ActionListener {
 				}
 
 				this.dispose();
-				new HomePage(user.getId());
+				new HomePage();
 
 			} catch (SQLException e1) {
 				e1.printStackTrace();
@@ -214,12 +216,12 @@ public class UpdateDetails extends JFrame implements ActionListener {
 
 		if (e.getSource() == back) {
 			this.dispose();
-			new HomePage(user.getId());
+			new HomePage();
 		}
 
 		if (e.getSource() == change_password) {
 			this.dispose();
-			new ChangePassword(user.getId());
+			new ChangePassword();
 		}
 
 	}

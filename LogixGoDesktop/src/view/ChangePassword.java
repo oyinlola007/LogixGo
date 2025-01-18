@@ -22,6 +22,7 @@ import utils.ComponentsGenerator;
 import utils.Constants;
 import utils.Helper;
 import utils.LayoutComponents;
+import utils.SessionManager;
 
 public class ChangePassword extends JFrame implements ActionListener {
 
@@ -45,8 +46,9 @@ public class ChangePassword extends JFrame implements ActionListener {
 
 	DBManagement db = new DBManagement();
 	Helper helper = new Helper();
+	int user_id = SessionManager.getSession();
 
-	public ChangePassword(int user_id) {
+	public ChangePassword() {
 		try {
 			user = db.getUserById(user_id);
 		} catch (SQLException e) {
@@ -148,7 +150,7 @@ public class ChangePassword extends JFrame implements ActionListener {
 				db.updateUserPassword(user.getId(), snew_password);
 
 				this.dispose();
-				new UpdateDetails(user.getId());
+				new UpdateDetails();
 
 			} catch (SQLException e1) {
 				e1.printStackTrace();
@@ -158,7 +160,7 @@ public class ChangePassword extends JFrame implements ActionListener {
 
 		if (e.getSource() == back) {
 			this.dispose();
-			new UpdateDetails(user.getId());
+			new UpdateDetails();
 		}
 
 	}

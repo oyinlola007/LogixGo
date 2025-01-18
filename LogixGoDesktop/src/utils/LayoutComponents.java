@@ -7,6 +7,8 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import org.jdatepicker.impl.JDatePickerImpl;
+
 public class LayoutComponents {
     public JPanel panel;
     public JLabel label;
@@ -14,6 +16,7 @@ public class LayoutComponents {
     public JPasswordField passwordField;
     public JButton button;
     public JComboBox<String> dropdown;
+    public JDatePickerImpl datePicker;
     
 
     public LayoutComponents(JPanel panel, JLabel label, JTextField textField, JPasswordField passwordField) {
@@ -27,6 +30,12 @@ public class LayoutComponents {
         this.panel = panel;
         this.label = label;
         this.dropdown = dropdown;
+    }
+    
+    public LayoutComponents(JPanel panel, JLabel label, JDatePickerImpl datePicker) {
+        this.panel = panel;
+        this.label = label;
+        this.datePicker = datePicker;
     }
     
     public LayoutComponents(JPanel panel, JLabel label) {
