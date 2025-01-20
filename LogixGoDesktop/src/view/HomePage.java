@@ -106,7 +106,7 @@ public class HomePage extends JFrame implements ActionListener {
 
 		if (user.getRole().equals("Scheduler")) {
 			btn_1.setText("Assign Delivery");
-			btn_2.setText("Generate schedule doc");
+			btn_2.setText("View Routes");
 		} else if (user.getRole().equals("Driver")) {
 			btn_1.setText("View pending missions");
 			btn_2.setText("View past missions");
@@ -124,6 +124,8 @@ public class HomePage extends JFrame implements ActionListener {
 				new NewDeliveryProducts(new ArrayList<>());
 			} else if (user.getRole().equals("Driver")) {
 			} else if (user.getRole().equals("Scheduler")) {
+				this.dispose();
+				new AssignDelivery();
 			}
 		}
 
@@ -133,6 +135,8 @@ public class HomePage extends JFrame implements ActionListener {
 				new ViewDeliveries();
 			} else if (user.getRole().equals("Driver")) {
 			} else if (user.getRole().equals("Scheduler")) {
+				this.dispose();
+				new Routes();
 			}
 		}
 

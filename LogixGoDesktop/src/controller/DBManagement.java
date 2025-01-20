@@ -11,6 +11,8 @@ import java.util.List;
 import model.DeliveryDetails;
 import model.Driver;
 import model.ProductDetails;
+import model.RouteDeliveryDetails;
+import model.RouteDetails;
 import model.User;
 
 public class DBManagement {
@@ -325,6 +327,7 @@ public class DBManagement {
 
 			ResultSet rsDelivery = deliveryStmt.executeQuery();
 			if (rsDelivery.next()) {
+				deliveryDetails.setDeliveryId(deliveryId);
 				deliveryDetails.setDate(rsDelivery.getString("dlv_date"));
 				deliveryDetails.setStatus(rsDelivery.getString("dlv_status"));
 				deliveryDetails.setAddressLine1(rsDelivery.getString("dlv_address_line_1"));
@@ -356,4 +359,253 @@ public class DBManagement {
 
 		return deliveryDetails;
 	}
+
+	public ArrayList<DeliveryDetails> getDeliveriesNotInRoute() throws SQLException {
+		ArrayList<DeliveryDetails> deliveries = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			// Query to get deliveries not in the route table
+			String sql = "SELECT d.dlv_id, d.dlv_date, d.dlv_address_line_1, d.dlv_zip_code, d.dlv_city, "
+					+ "SUM(di.dli_total_weight) AS total_weight " + "FROM delivery_dlv d "
+					+ "LEFT JOIN route_delivery_rtd r ON d.dlv_id = r.rtd_delivery_id "
+					+ "JOIN delivery_item_dli di ON d.dlv_id = di.dli_delivery_id " + "WHERE r.rtd_delivery_id IS NULL "
+					+ "GROUP BY d.dlv_id, d.dlv_date, d.dlv_address_line_1, d.dlv_zip_code, d.dlv_city "
+					+ "ORDER BY d.dlv_date DESC";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				DeliveryDetails delivery = new DeliveryDetails();
+				delivery.setDeliveryId(rs.getInt("dlv_id"));
+				delivery.setDate(rs.getString("dlv_date"));
+				delivery.setAddressLine1(rs.getString("dlv_address_line_1"));
+				delivery.setZipCode(rs.getString("dlv_zip_code"));
+				delivery.setCity(rs.getString("dlv_city"));
+				delivery.setTotalWeight(rs.getInt("total_weight"));
+
+				deliveries.add(delivery);
+			}
+		} finally {
+			conn.close();
+		}
+
+		return deliveries;
+	}
+
+	public String[] getDriversList() throws SQLException {
+		ArrayList<String> drivers = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			// Query to get driver details
+			String sql = "SELECT u.usr_first_name, u.usr_last_name, d.drv_id " + "FROM driver_drv d "
+					+ "JOIN user_usr u ON d.drv_id = u.usr_id";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				String name = rs.getString("usr_first_name") + " " + rs.getString("usr_last_name");
+				int id = rs.getInt("drv_id");
+				drivers.add(name + ", " + id);
+			}
+		} finally {
+			conn.close();
+		}
+
+		return drivers.toArray(new String[0]);
+	}
+
+	public void insertRoute(String routeDate, int driverId, String status) throws SQLException {
+		Connection conn = createConnection();
+		try {
+			// Insert into route table
+			String sql = "INSERT INTO route_rte (rte_date, rte_driver_id, rte_status) VALUES (?, ?, ?)";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, routeDate);
+			pstmt.setInt(2, driverId);
+			pstmt.setString(3, status);
+
+			int rowsInserted = pstmt.executeUpdate();
+			if (rowsInserted > 0) {
+				System.out.println("Route inserted successfully.");
+			} else {
+				System.out.println("Failed to insert route.");
+			}
+		} finally {
+			conn.close();
+		}
+	}
+
+	public ArrayList<RouteDetails> getRoutesForDay(String date) throws SQLException {
+		ArrayList<RouteDetails> routes = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			String sql = "SELECT r.rte_id, r.rte_date, "
+					+ "CONCAT(u.usr_first_name, ' ', u.usr_last_name) AS driver_name, "
+					+ "d.drv_truck_capacity - IFNULL(SUM(di.dli_total_weight), 0) AS available_capacity, "
+					+ "IFNULL(SUM(di.dli_total_weight), 0) AS total_weight " + "FROM route_rte r "
+					+ "JOIN driver_drv d ON r.rte_driver_id = d.drv_id " + "JOIN user_usr u ON d.drv_id = u.usr_id "
+					+ "LEFT JOIN route_delivery_rtd rd ON r.rte_id = rd.rtd_route_id "
+					+ "LEFT JOIN delivery_item_dli di ON rd.rtd_delivery_id = di.dli_delivery_id "
+					+ "WHERE r.rte_date = ? " + "GROUP BY r.rte_id, r.rte_date, driver_name, d.drv_truck_capacity "
+					+ "ORDER BY r.rte_id";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, date);
+
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				int routeId = rs.getInt("rte_id");
+				String driverName = rs.getString("driver_name");
+				int availableCapacity = rs.getInt("available_capacity");
+				String deliveryDate = rs.getString("rte_date");
+				int totalWeight = rs.getInt("total_weight");
+
+				routes.add(new RouteDetails(routeId, driverName, availableCapacity, deliveryDate, totalWeight));
+			}
+		} finally {
+			conn.close();
+		}
+
+		return routes;
+	}
+
+	public ArrayList<RouteDetails> getAllRoutes() throws SQLException {
+		ArrayList<RouteDetails> routes = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			String sql = "SELECT r.rte_id, r.rte_date, "
+					+ "CONCAT(u.usr_first_name, ' ', u.usr_last_name) AS driver_name, "
+					+ "d.drv_truck_capacity - IFNULL(SUM(di.dli_total_weight), 0) AS available_capacity, "
+					+ "IFNULL(SUM(di.dli_total_weight), 0) AS total_weight " + "FROM route_rte r "
+					+ "JOIN driver_drv d ON r.rte_driver_id = d.drv_id " + "JOIN user_usr u ON d.drv_id = u.usr_id "
+					+ "LEFT JOIN route_delivery_rtd rd ON r.rte_id = rd.rtd_route_id "
+					+ "LEFT JOIN delivery_item_dli di ON rd.rtd_delivery_id = di.dli_delivery_id "
+					+ "GROUP BY r.rte_id, r.rte_date, driver_name, d.drv_truck_capacity " + "ORDER BY r.rte_id";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				int routeId = rs.getInt("rte_id");
+				String driverName = rs.getString("driver_name");
+				int availableCapacity = rs.getInt("available_capacity");
+				String deliveryDate = rs.getString("rte_date");
+				int totalWeight = rs.getInt("total_weight");
+
+				routes.add(new RouteDetails(routeId, driverName, availableCapacity, deliveryDate, totalWeight));
+			}
+		} finally {
+			conn.close();
+		}
+
+		return routes;
+	}
+
+	public void insertIntoRouteDelivery(int routeId, int deliveryId) throws SQLException {
+		Connection conn = createConnection();
+		try {
+			// Determine the next order value
+			String orderSql = "SELECT COALESCE(MAX(rtd_order), 0) + 1 AS next_order FROM route_delivery_rtd WHERE rtd_route_id = ?";
+			PreparedStatement orderStmt = conn.prepareStatement(orderSql);
+			orderStmt.setInt(1, routeId);
+
+			ResultSet rs = orderStmt.executeQuery();
+			int nextOrder = 1; // Default to 1
+			if (rs.next()) {
+				nextOrder = rs.getInt("next_order");
+			}
+
+			// Insert into route_delivery table with calculated order
+			String sql = "INSERT INTO route_delivery_rtd (rtd_route_id, rtd_delivery_id, rtd_order) VALUES (?, ?, ?)";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, routeId);
+			pstmt.setInt(2, deliveryId);
+			pstmt.setInt(3, nextOrder);
+
+			int rowsInserted = pstmt.executeUpdate();
+			if (rowsInserted > 0) {
+				System.out.println("Successfully added delivery ID " + deliveryId + " to route ID " + routeId
+						+ " with order " + nextOrder + ".");
+			} else {
+				System.out.println("Failed to add delivery to route.");
+			}
+		} finally {
+			conn.close();
+		}
+	}
+
+	public String getConstantValue(String constantName) throws SQLException {
+		Connection conn = createConnection();
+		String value = null;
+
+		try {
+			String sql = "SELECT cst_constant_value FROM constant_cst WHERE cst_constant_name = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, constantName);
+
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				value = rs.getString("cst_constant_value");
+			}
+		} finally {
+			conn.close();
+		}
+
+		return value;
+	}
+
+	public ArrayList<RouteDeliveryDetails> getRouteDeliveries(int routeId) throws SQLException {
+		ArrayList<RouteDeliveryDetails> deliveries = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			String sql = "SELECT r.rtd_route_id, r.rtd_delivery_id, d.dlv_address_line_1, d.dlv_zip_code, d.dlv_city, r.rtd_order "
+					+ "FROM route_delivery_rtd r " + "JOIN delivery_dlv d ON r.rtd_delivery_id = d.dlv_id "
+					+ "WHERE r.rtd_route_id = ? " + "ORDER BY r.rtd_order";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, routeId);
+
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				RouteDeliveryDetails delivery = new RouteDeliveryDetails(rs.getInt("rtd_route_id"),
+						rs.getInt("rtd_delivery_id"), rs.getString("dlv_address_line_1"), rs.getString("dlv_zip_code"),
+						rs.getString("dlv_city"), rs.getInt("rtd_order"));
+
+				deliveries.add(delivery);
+			}
+		} finally {
+			conn.close();
+		}
+
+		return deliveries;
+	}
+
+	public void updateRouteDeliveryOrder(int routeId, int deliveryId, int newOrder) throws SQLException {
+		Connection conn = createConnection();
+		try {
+			String sql = "UPDATE route_delivery_rtd SET rtd_order = ? WHERE rtd_route_id = ? AND rtd_delivery_id = ?";
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, newOrder);
+			pstmt.setInt(2, routeId);
+			pstmt.setInt(3, deliveryId);
+
+			int rowsUpdated = pstmt.executeUpdate();
+			if (rowsUpdated > 0) {
+				System.out.println("Successfully updated order to " + newOrder + " for delivery ID " + deliveryId
+						+ " in route ID " + routeId + ".");
+			} else {
+				System.out.println("No records found to update.");
+			}
+		} finally {
+			conn.close();
+		}
+	}
+
 }

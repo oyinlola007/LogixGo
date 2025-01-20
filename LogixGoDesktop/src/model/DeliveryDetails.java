@@ -3,6 +3,7 @@ package model;
 import java.util.List;
 
 public class DeliveryDetails {
+    private int deliveryId;
     private String date;
     private String status;
     private String addressLine1;
@@ -76,6 +77,14 @@ public class DeliveryDetails {
     public void setProducts(List<ProductDetails> products) {
         this.products = products;
     }
+
+	public int getDeliveryId() {
+		return deliveryId;
+	}
+
+	public void setDeliveryId(int deliveryId) {
+		this.deliveryId = deliveryId;
+	}
 }
 
 

@@ -12,7 +12,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -23,43 +23,41 @@ import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
 import controller.DBManagement;
-import model.DeliveryDetails;
-import model.ProductDetails;
+import model.RouteDetails;
 import model.User;
 import utils.Constants;
 import utils.Helper;
 import utils.SessionManager;
 
-public class ViewParticularDelivery extends JFrame implements ActionListener {
+public class Routes extends JFrame implements ActionListener {
 
 	private Container c;
 	private JLabel title;
 	private JButton back;
+	private JButton generateDoc;
 	private JPanel mainPanel;
 	JPanel scrollablePanel;
-	JLabel ldate;
-	JLabel lweight;
-	JLabel laddress;
 
 	static int screen_width = Constants.screen_width;
 	static int screen_height = Constants.screen_height;
 	static int main_panel_width = (int) (screen_width * 0.8);
-	static int main_panel_height = (int) (screen_height * 0.8);
+	static int main_panel_height = (int) (screen_height * 0.7);
 	static int entry_layout_height = Constants.entry_layout_height;
-	static int y_start_margin = 40;
+	static int y_start_margin = 70;
 	static String[] products;
 
 	User user;
+	ArrayList<RouteDetails> routes;
 
 	DBManagement db = new DBManagement();
 	Helper helper = new Helper();
 	int user_id = SessionManager.getSession();
-	DeliveryDetails delivery;
 
-	public ViewParticularDelivery(int deliveryId) {
+	public Routes() {
 		try {
 			user = db.getUserById(user_id);
-			delivery = db.getDeliveryDetails(deliveryId);
+			routes = db.getAllRoutes();
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -72,16 +70,9 @@ public class ViewParticularDelivery extends JFrame implements ActionListener {
 		c = getContentPane();
 		c.setLayout(null);
 
-		title = new JLabel();
-		if (delivery.getStatus().equals("pending")) {
-			title.setText("Pending");
-			title.setForeground(Constants.text_red_color);
-		} else {
-			title.setText("Delivered");
-			title.setForeground(Constants.text_green_color);
-		}
+		title = new JLabel("Routes");
 		title.setFont(new Font("Arial", Font.BOLD, Constants.title_size));
-		title.setSize(300, 40);
+		title.setSize((int) (main_panel_width * 0.8), 40);
 		title.setLocation((int) ((screen_width - main_panel_width) * 0.5), y_start_margin);
 		c.add(title);
 
@@ -105,6 +96,19 @@ public class ViewParticularDelivery extends JFrame implements ActionListener {
 		mainPanel.setSize(main_panel_width, main_panel_height);
 		c.add(mainPanel);
 
+		generateDoc = new JButton("Generate schedule doc");
+		generateDoc.setBorderPainted(false);
+		generateDoc.setFocusPainted(false);
+		generateDoc.addActionListener(this);
+		generateDoc.setHorizontalAlignment(SwingConstants.LEFT);
+		generateDoc.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
+		generateDoc.setForeground(Constants.text_button_color);
+		generateDoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		generateDoc.setSize((int) (main_panel_width * 0.5), 40);
+		generateDoc.setLocation((int) ((screen_width - main_panel_width) * 0.5),
+				y_start_margin + title.getHeight() + mainPanel.getHeight() + 20);
+		c.add(generateDoc);
+
 		scrollablePanel = new JPanel(new GridBagLayout());
 		scrollablePanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
@@ -121,64 +125,59 @@ public class ViewParticularDelivery extends JFrame implements ActionListener {
 		scrollPane.setPreferredSize(new Dimension(580, 350));
 		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-		JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-		bottomPanel.setBackground(Constants.background_color);
-		bottomPanel.setPreferredSize(new Dimension(main_panel_width, (int) (entry_layout_height * 1.6)));
-
-		ldate = new JLabel("Delivery date: " + delivery.getDate(), SwingConstants.CENTER);
-		ldate.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
-		ldate.setPreferredSize(new Dimension((int) (main_panel_width * 0.4), entry_layout_height - 30));
-		bottomPanel.add(ldate);
-
-		lweight = new JLabel("Total weight: " + String.valueOf(delivery.getTotalWeight()) + " Kg",
-				SwingConstants.CENTER);
-		lweight.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
-		lweight.setPreferredSize(new Dimension((int) (main_panel_width * 0.4), entry_layout_height - 30));
-		bottomPanel.add(lweight);
-
-		laddress = new JLabel(
-				delivery.getAddressLine1() + ", " + delivery.getCity() + " (" + delivery.getZipCode() + ") ",
-				SwingConstants.CENTER);
-		laddress.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
-		laddress.setPreferredSize(new Dimension((int) (main_panel_width * 0.8), entry_layout_height - 30));
-		bottomPanel.add(laddress);
-
 		mainPanel.add(scrollPane, BorderLayout.CENTER);
-		mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-		populateScrollablePanel(constraints, delivery.getProducts());
+		populateScrollablePanel(constraints, routes);
 
 		this.setVisible(true);
 
 	}
 
-	private JPanel createRow(JPanel scrollablePanel, String field1, int field2) {
+	private JPanel createRow(JPanel scrollablePanel, String field1, String field2, String field3, int routeId) {
 		JPanel rowPanel = new JPanel();
-		rowPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 40, 20));
+		rowPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 10));
 		rowPanel.setBorder(new LineBorder(Constants.border_color, 2));
 
-		JLabel label1 = new JLabel(field1, SwingConstants.RIGHT);
+		JLabel label1 = new JLabel("<html>" + field1 + "</b><br/>" + field2 + "</b><br/>" + field3 + "</html>",
+				SwingConstants.LEFT);
 		label1.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
-		label1.setPreferredSize(new Dimension((int) (main_panel_width * 0.35), entry_layout_height - 30));
+		label1.setPreferredSize(new Dimension((int) (main_panel_width * 0.4), entry_layout_height * 2 - 60));
 
-		JLabel label2 = new JLabel(field2 + " Kg", SwingConstants.LEFT);
-		label2.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
-		label2.setPreferredSize(new Dimension((int) (main_panel_width * 0.25), entry_layout_height - 30));
+		JButton reorderButton = new JButton("Reorder Route");
+		reorderButton.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
+		reorderButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		reorderButton.setPreferredSize(new Dimension((int) (main_panel_width * 0.22), entry_layout_height - 30));
+		reorderButton.addActionListener(e -> {
+			this.dispose();
+			new ReorderRoute(routeId);
+
+		});
+
+		JButton viewButton = new JButton("View Route");
+		viewButton.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
+		viewButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		viewButton.setPreferredSize(new Dimension((int) (main_panel_width * 0.2), entry_layout_height - 30));
+		viewButton.addActionListener(e -> {
+			this.dispose();
+			new ViewRoute(routeId, null);
+		});
 
 		rowPanel.add(label1);
-		rowPanel.add(label2);
+		rowPanel.add(viewButton);
+		rowPanel.add(reorderButton);
 
 		return rowPanel;
 	}
 
-	private void populateScrollablePanel(GridBagConstraints constraints, List<ProductDetails> products) {
-		for (ProductDetails product : products) {
-			String productName = product.getProductName();
-			int productWeight = product.getProductWeight();
+	private void populateScrollablePanel(GridBagConstraints constraints, ArrayList<RouteDetails> routesForDay) {
+		for (RouteDetails routeDetails : routesForDay) {
+			String driver = "Driver: " + routeDetails.getDriverName();
+			String capacity = "Total Weight: " + routeDetails.getTotalWeight() + " Kg";
+			String date = "Delivery Date: " + routeDetails.getDeliveryDate();
+			int routeId = routeDetails.getRouteId();
 
 			// Add a new row
 			constraints.gridy = scrollablePanel.getComponentCount();
-			JPanel newRow = createRow(scrollablePanel, productName, productWeight);
+			JPanel newRow = createRow(scrollablePanel, driver, capacity, date, routeId);
 			scrollablePanel.add(newRow, constraints);
 		}
 
@@ -191,9 +190,13 @@ public class ViewParticularDelivery extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == back) {
 			this.dispose();
-			new ViewDeliveries();
+			new HomePage();
 		}
 
+		if (e.getSource() == generateDoc) {
+//			this.dispose();
+//			new CreateNewRoute(delivery);
+		}
 	}
 
 }
