@@ -8,7 +8,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.DeliveryDetails;
 import model.Driver;
+import model.ProductDetails;
 import model.User;
 
 public class DBManagement {
@@ -279,4 +281,79 @@ public class DBManagement {
 		}
 	}
 
+	public ArrayList<String> getCustomerDeliveries(int userId) throws SQLException {
+		ArrayList<String> deliveries = new ArrayList<>();
+		Connection conn = createConnection();
+
+		String sql = "SELECT d.dlv_id, d.dlv_date, d.dlv_status, " + "SUM(di.dli_total_weight) AS total_weight "
+				+ "FROM delivery_dlv d " + "JOIN delivery_item_dli di ON d.dlv_id = di.dli_delivery_id "
+				+ "JOIN product_prd p ON di.dli_product_id = p.prd_id " + "WHERE d.dlv_usr_id = ? "
+				+ "GROUP BY d.dlv_id, d.dlv_date, d.dlv_status " + "ORDER BY d.dlv_date DESC";
+
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		pstmt.setInt(1, userId);
+
+		ResultSet rs = pstmt.executeQuery();
+		while (rs.next()) {
+			int deliveryId = rs.getInt("dlv_id");
+			String deliveryDate = rs.getString("dlv_date");
+			int totalWeight = rs.getInt("total_weight");
+			String status = rs.getString("dlv_status");
+
+			deliveries.add(deliveryId + ", " + deliveryDate + ", " + totalWeight + ", " + status);
+		}
+
+		conn.close();
+		return deliveries;
+	}
+
+	public DeliveryDetails getDeliveryDetails(int deliveryId) throws SQLException {
+		DeliveryDetails deliveryDetails = new DeliveryDetails();
+		List<ProductDetails> products = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			// Query to get delivery details
+			String deliverySql = "SELECT d.dlv_date, d.dlv_status, d.dlv_address_line_1, d.dlv_zip_code, d.dlv_city, "
+					+ "SUM(di.dli_total_weight) AS total_weight, SUM(di.dli_total_weight / p.prd_unit_weight) AS total_quantity "
+					+ "FROM delivery_dlv d " + "JOIN delivery_item_dli di ON d.dlv_id = di.dli_delivery_id "
+					+ "JOIN product_prd p ON di.dli_product_id = p.prd_id " + "WHERE d.dlv_id = ? "
+					+ "GROUP BY d.dlv_date, d.dlv_status, d.dlv_address_line_1, d.dlv_zip_code, d.dlv_city";
+
+			PreparedStatement deliveryStmt = conn.prepareStatement(deliverySql);
+			deliveryStmt.setInt(1, deliveryId);
+
+			ResultSet rsDelivery = deliveryStmt.executeQuery();
+			if (rsDelivery.next()) {
+				deliveryDetails.setDate(rsDelivery.getString("dlv_date"));
+				deliveryDetails.setStatus(rsDelivery.getString("dlv_status"));
+				deliveryDetails.setAddressLine1(rsDelivery.getString("dlv_address_line_1"));
+				deliveryDetails.setZipCode(rsDelivery.getString("dlv_zip_code"));
+				deliveryDetails.setCity(rsDelivery.getString("dlv_city"));
+				deliveryDetails.setTotalWeight(rsDelivery.getInt("total_weight"));
+				deliveryDetails.setTotalQuantity(rsDelivery.getInt("total_quantity"));
+			}
+
+			// Query to get individual product details
+			String productSql = "SELECT p.prd_name, di.dli_total_weight " + "FROM delivery_item_dli di "
+					+ "JOIN product_prd p ON di.dli_product_id = p.prd_id " + "WHERE di.dli_delivery_id = ?";
+
+			PreparedStatement productStmt = conn.prepareStatement(productSql);
+			productStmt.setInt(1, deliveryId);
+
+			ResultSet rsProduct = productStmt.executeQuery();
+			while (rsProduct.next()) {
+				String productName = rsProduct.getString("prd_name");
+				Integer productWeight = rsProduct.getInt("dli_total_weight");
+				products.add(new ProductDetails(productName, productWeight));
+			}
+
+			deliveryDetails.setProducts(products);
+
+		} finally {
+			conn.close();
+		}
+
+		return deliveryDetails;
+	}
 }

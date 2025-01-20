@@ -45,9 +45,9 @@ public class Login extends JFrame implements ActionListener {
 
 	public Login() {
 		if (user_id != null) {
-		    System.out.println("Session exists for user: " + user_id);
-		    new HomePage();
-		    return;
+			System.out.println("Session exists for user: " + user_id);
+			new HomePage();
+			return;
 		}
 
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -137,7 +137,7 @@ public class Login extends JFrame implements ActionListener {
 				helper.showErrorMessage(this, "Incorrect email or password");
 				return;
 			}
-			
+
 			SessionManager.saveSession(user_id);
 
 			this.dispose();

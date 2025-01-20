@@ -1,6 +1,5 @@
 package view;
 
-import controller.DBManagement;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Font;
@@ -8,10 +7,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+
+import controller.DBManagement;
 import model.User;
 import utils.Constants;
 import utils.Helper;
@@ -115,6 +117,7 @@ public class HomePage extends JFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+
 		if (e.getSource() == btn_1) {
 			if (user.getRole().equals("Customer")) {
 				this.dispose();
@@ -123,7 +126,16 @@ public class HomePage extends JFrame implements ActionListener {
 			} else if (user.getRole().equals("Scheduler")) {
 			}
 		}
-		
+
+		if (e.getSource() == btn_2) {
+			if (user.getRole().equals("Customer")) {
+				this.dispose();
+				new ViewDeliveries();
+			} else if (user.getRole().equals("Driver")) {
+			} else if (user.getRole().equals("Scheduler")) {
+			}
+		}
+
 		if (e.getSource() == btn_3) {
 			this.dispose();
 			new UpdateDetails();
@@ -131,7 +143,7 @@ public class HomePage extends JFrame implements ActionListener {
 
 		if (e.getSource() == logout) {
 			SessionManager.clearSession();
-			
+
 			this.dispose();
 			new Login();
 		}
