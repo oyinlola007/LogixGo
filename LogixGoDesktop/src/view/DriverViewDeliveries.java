@@ -23,18 +23,19 @@ import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
 import controller.DBManagement;
+import model.DeliveryDetails;
+import model.DriverRouteDetails;
 import model.RouteDetails;
 import model.User;
 import utils.Constants;
 import utils.Helper;
 import utils.SessionManager;
 
-public class Routes extends JFrame implements ActionListener {
+public class DriverViewDeliveries extends JFrame implements ActionListener {
 
 	private Container c;
 	private JLabel title;
 	private JButton back;
-	private JButton generateDoc;
 	private JPanel mainPanel;
 	JPanel scrollablePanel;
 
@@ -47,16 +48,20 @@ public class Routes extends JFrame implements ActionListener {
 	static String[] products;
 
 	User user;
-	ArrayList<RouteDetails> routes;
+	ArrayList<DeliveryDetails> deliveriesForRoute;
+	int routeId;
+	int destination;
 
 	DBManagement db = new DBManagement();
 	Helper helper = new Helper();
 	int user_id = SessionManager.getSession();
 
-	public Routes() {
+	public DriverViewDeliveries(int routeId, int destination) {
 		try {
 			user = db.getUserById(user_id);
-			routes = db.getAllRoutes();
+			deliveriesForRoute = db.getDeliveriesForRoute(routeId);
+			this.routeId = routeId;
+			this.destination = destination;
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -70,7 +75,11 @@ public class Routes extends JFrame implements ActionListener {
 		c = getContentPane();
 		c.setLayout(null);
 
-		title = new JLabel("Routes");
+		if (destination == 1) {
+			title = new JLabel("Pending Deliveries");
+		} else {
+			title = new JLabel("Past Deliveries");
+		}
 		title.setFont(new Font("Arial", Font.BOLD, Constants.title_size));
 		title.setSize((int) (main_panel_width * 0.8), 40);
 		title.setLocation((int) ((screen_width - main_panel_width) * 0.5), y_start_margin);
@@ -96,19 +105,6 @@ public class Routes extends JFrame implements ActionListener {
 		mainPanel.setSize(main_panel_width, main_panel_height);
 		c.add(mainPanel);
 
-		generateDoc = new JButton("Generate schedule doc");
-		generateDoc.setBorderPainted(false);
-		generateDoc.setFocusPainted(false);
-		generateDoc.addActionListener(this);
-		generateDoc.setHorizontalAlignment(SwingConstants.LEFT);
-		generateDoc.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
-		generateDoc.setForeground(Constants.text_button_color);
-		generateDoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		generateDoc.setSize((int) (main_panel_width * 0.5), 40);
-		generateDoc.setLocation((int) ((screen_width - main_panel_width) * 0.5),
-				y_start_margin + title.getHeight() + mainPanel.getHeight() + 20);
-		c.add(generateDoc);
-
 		scrollablePanel = new JPanel(new GridBagLayout());
 		scrollablePanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
@@ -126,62 +122,54 @@ public class Routes extends JFrame implements ActionListener {
 		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		mainPanel.add(scrollPane, BorderLayout.CENTER);
-		populateScrollablePanel(constraints, routes);
+		populateScrollablePanel(constraints, deliveriesForRoute);
 
 		this.setVisible(true);
 
-		if (routes.size() == 0) {
-			helper.showInfoMessage(this, "No data available for routes", "");
+		if (deliveriesForRoute.size() == 0) {
+			helper.showInfoMessage(this, "No data available for route", "");
 		}
 
 	}
 
-	private JPanel createRow(JPanel scrollablePanel, String field1, String field2, String field3, int routeId) {
+	private JPanel createRow(JPanel scrollablePanel, String field1, String field2, String field3, int deliveryId) {
 		JPanel rowPanel = new JPanel();
 		rowPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 10));
 		rowPanel.setBorder(new LineBorder(Constants.border_color, 2));
 
-		JLabel label1 = new JLabel("<html>" + field1 + "</b><br/>" + field2 + "</b><br/>" + field3 + "</html>",
+		JLabel label1 = new JLabel(
+				"<html>" + field1 + "&nbsp;&nbsp;&nbsp;&nbsp;" + field2 + " Kg<br/>" + field3 + "</html>",
 				SwingConstants.LEFT);
 		label1.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
-		label1.setPreferredSize(new Dimension((int) (main_panel_width * 0.4), entry_layout_height * 2 - 60));
+		label1.setPreferredSize(new Dimension((int) (main_panel_width * 0.6), entry_layout_height * 2 - 60));
 
-		JButton reorderButton = new JButton("Reorder Route");
-		reorderButton.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
-		reorderButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		reorderButton.setPreferredSize(new Dimension((int) (main_panel_width * 0.22), entry_layout_height - 30));
-		reorderButton.addActionListener(e -> {
-			this.dispose();
-			new ReorderRoute(routeId);
-
-		});
-
-		JButton viewButton = new JButton("View Route");
+		JButton viewButton = new JButton("View");
 		viewButton.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
 		viewButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		viewButton.setPreferredSize(new Dimension((int) (main_panel_width * 0.2), entry_layout_height - 30));
 		viewButton.addActionListener(e -> {
 			this.dispose();
-			new ViewRoute(routeId, null);
+			new ViewParticularDelivery(deliveryId, routeId, 2, destination);
+
 		});
 
 		rowPanel.add(label1);
 		rowPanel.add(viewButton);
-		rowPanel.add(reorderButton);
 
 		return rowPanel;
 	}
 
-	private void populateScrollablePanel(GridBagConstraints constraints, ArrayList<RouteDetails> routesForDay) {
-		for (RouteDetails routeDetails : routesForDay) {
-			String driver = "Driver: " + routeDetails.getDriverName();
-			String capacity = "Total Weight: " + routeDetails.getTotalWeight() + " Kg";
-			String date = "Delivery Date: " + routeDetails.getDeliveryDate();
-			int routeId = routeDetails.getRouteId();
+	private void populateScrollablePanel(GridBagConstraints constraints, ArrayList<DeliveryDetails> deliveries) {
+		for (DeliveryDetails delivery : deliveries) {
+			int deliveryId = delivery.getDeliveryId();
+			String deliveryDate = delivery.getDate();
+			String totalWeight = String.valueOf(delivery.getTotalWeight());
+			String address = delivery.getAddressLine1() + ", " + delivery.getCity() + " (" + delivery.getZipCode()
+					+ ") ";
 
 			// Add a new row
 			constraints.gridy = scrollablePanel.getComponentCount();
-			JPanel newRow = createRow(scrollablePanel, driver, capacity, date, routeId);
+			JPanel newRow = createRow(scrollablePanel, deliveryDate, totalWeight, address, deliveryId);
 			scrollablePanel.add(newRow, constraints);
 		}
 
@@ -193,13 +181,13 @@ public class Routes extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == back) {
-			this.dispose();
-			new HomePage();
-		}
-
-		if (e.getSource() == generateDoc) {
-//			this.dispose();
-//			new CreateNewRoute(delivery);
+			if (destination == 1) {
+				this.dispose();
+				new PendingMissions();
+			} else {
+				this.dispose();
+				new PastMissions();
+			}
 		}
 	}
 

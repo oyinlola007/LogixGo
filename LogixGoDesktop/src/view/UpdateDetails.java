@@ -199,18 +199,19 @@ public class UpdateDetails extends JFrame implements ActionListener {
 					return;
 				}
 			}
+			if (helper.showConfirmDialog(this, "Are you sure you want to update your details?", "") == 0) {
+				try {
+					db.updateUserEmailAndPhone(user.getId(), semail, sphone);
+					if (user.getRole().equals("Driver")) {
+						db.updateDriverTruckDetails(user.getId(), struck_reg_no, Integer.parseInt(struck_capacity));
+					}
 
-			try {
-				db.updateUserEmailAndPhone(user.getId(), semail, sphone);
-				if (user.getRole().equals("Driver")) {
-					db.updateDriverTruckDetails(user.getId(), struck_reg_no, Integer.parseInt(struck_capacity));
+					this.dispose();
+					new HomePage();
+
+				} catch (SQLException e1) {
+					e1.printStackTrace();
 				}
-
-				this.dispose();
-				new HomePage();
-
-			} catch (SQLException e1) {
-				e1.printStackTrace();
 			}
 		}
 

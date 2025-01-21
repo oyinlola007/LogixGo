@@ -149,14 +149,22 @@ public class AssignDeliveryToRoute extends JFrame implements ActionListener {
 
 		this.setVisible(true);
 
+		if (routesForDay.size() == 0) {
+			helper.showInfoMessage(this, "No data available for routes", "");
+		}
+
 	}
 
-	private JPanel createRow(JPanel scrollablePanel, String field1, String field2, String field3, int routeId) {
+	private JPanel createRow(JPanel scrollablePanel, String field1, int field2, String field3, int routeId) {
 		JPanel rowPanel = new JPanel();
 		rowPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 10));
 		rowPanel.setBorder(new LineBorder(Constants.border_color, 2));
 
-		JLabel label1 = new JLabel("<html>" + field1 + "</b><br/>" + field2 + "</b><br/>" + field3 + "</html>",
+		String driver = "Driver: " + field1;
+		String capacity = "Available Capacity: " + field2 + " Kg";
+		String date = "Delivery Date: " + field3;
+
+		JLabel label1 = new JLabel("<html>" + driver + "</b><br/>" + capacity + "</b><br/>" + date + "</html>",
 				SwingConstants.LEFT);
 		label1.setFont(new Font("Arial", Font.PLAIN, Constants.input_label_size));
 		label1.setPreferredSize(new Dimension((int) (main_panel_width * 0.4), entry_layout_height * 2 - 60));
@@ -177,13 +185,22 @@ public class AssignDeliveryToRoute extends JFrame implements ActionListener {
 		assignButton.setPreferredSize(new Dimension((int) (main_panel_width * 0.22), entry_layout_height - 30));
 		assignButton.addActionListener(e -> {
 
-			try {
-				db.insertIntoRouteDelivery(routeId, delivery.getDeliveryId());
-				this.dispose();
-				new AssignDelivery();
+			if (field2 < delivery.getTotalWeight()) {
+				helper.showErrorMessage(this,
+						"Available capacity in the route is less than the total weight of the delivery");
+			} else {
 
-			} catch (SQLException e1) {
-				e1.printStackTrace();
+				if (helper.showConfirmDialog(this, "Are you sure you want to Assign the delivery to this route?",
+						"") == 0) {
+					try {
+						db.insertIntoRouteDelivery(routeId, delivery.getDeliveryId());
+						this.dispose();
+						new AssignDelivery();
+
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+					}
+				}
 			}
 		});
 
@@ -192,13 +209,14 @@ public class AssignDeliveryToRoute extends JFrame implements ActionListener {
 		rowPanel.add(assignButton);
 
 		return rowPanel;
+
 	}
 
 	private void populateScrollablePanel(GridBagConstraints constraints, ArrayList<RouteDetails> routesForDay) {
 		for (RouteDetails routeDetails : routesForDay) {
-			String driver = "Driver: " + routeDetails.getDriverName();
-			String capacity = "Available Capacity: " + routeDetails.getAvailableCapacity() + " Kg";
-			String date = "Delivery Date: " + routeDetails.getDeliveryDate();
+			String driver = routeDetails.getDriverName();
+			int capacity = routeDetails.getAvailableCapacity();
+			String date = routeDetails.getDeliveryDate();
 			int routeId = routeDetails.getRouteId();
 
 			// Add a new row

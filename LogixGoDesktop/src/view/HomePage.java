@@ -123,6 +123,8 @@ public class HomePage extends JFrame implements ActionListener {
 				this.dispose();
 				new NewDeliveryProducts(new ArrayList<>());
 			} else if (user.getRole().equals("Driver")) {
+				this.dispose();
+				new PendingMissions();
 			} else if (user.getRole().equals("Scheduler")) {
 				this.dispose();
 				new AssignDelivery();
@@ -134,6 +136,8 @@ public class HomePage extends JFrame implements ActionListener {
 				this.dispose();
 				new ViewDeliveries();
 			} else if (user.getRole().equals("Driver")) {
+				this.dispose();
+				new PastMissions();
 			} else if (user.getRole().equals("Scheduler")) {
 				this.dispose();
 				new Routes();
@@ -146,10 +150,12 @@ public class HomePage extends JFrame implements ActionListener {
 		}
 
 		if (e.getSource() == logout) {
-			SessionManager.clearSession();
+			if (helper.showConfirmDialog(this, "Are you sure you want to log out?", "") == 0) {
+				SessionManager.clearSession();
 
-			this.dispose();
-			new Login();
+				this.dispose();
+				new Login();
+			}
 		}
 
 	}

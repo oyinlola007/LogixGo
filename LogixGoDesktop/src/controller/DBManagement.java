@@ -10,6 +10,7 @@ import java.util.List;
 
 import model.DeliveryDetails;
 import model.Driver;
+import model.DriverRouteDetails;
 import model.ProductDetails;
 import model.RouteDeliveryDetails;
 import model.RouteDetails;
@@ -451,8 +452,8 @@ public class DBManagement {
 					+ "JOIN driver_drv d ON r.rte_driver_id = d.drv_id " + "JOIN user_usr u ON d.drv_id = u.usr_id "
 					+ "LEFT JOIN route_delivery_rtd rd ON r.rte_id = rd.rtd_route_id "
 					+ "LEFT JOIN delivery_item_dli di ON rd.rtd_delivery_id = di.dli_delivery_id "
-					+ "WHERE r.rte_date = ? " + "GROUP BY r.rte_id, r.rte_date, driver_name, d.drv_truck_capacity "
-					+ "ORDER BY r.rte_id";
+					+ "WHERE r.rte_date = ? AND r.rte_status = 'pending' "
+					+ "GROUP BY r.rte_id, r.rte_date, driver_name, d.drv_truck_capacity " + "ORDER BY r.rte_id";
 
 			PreparedStatement pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, date);
@@ -486,6 +487,7 @@ public class DBManagement {
 					+ "JOIN driver_drv d ON r.rte_driver_id = d.drv_id " + "JOIN user_usr u ON d.drv_id = u.usr_id "
 					+ "LEFT JOIN route_delivery_rtd rd ON r.rte_id = rd.rtd_route_id "
 					+ "LEFT JOIN delivery_item_dli di ON rd.rtd_delivery_id = di.dli_delivery_id "
+					+ "WHERE r.rte_status = 'Pending' "
 					+ "GROUP BY r.rte_id, r.rte_date, driver_name, d.drv_truck_capacity " + "ORDER BY r.rte_id";
 
 			PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -604,6 +606,130 @@ public class DBManagement {
 				System.out.println("No records found to update.");
 			}
 		} finally {
+			conn.close();
+		}
+	}
+
+	public ArrayList<DriverRouteDetails> getPendingRoutesForDriver(int driverId) throws SQLException {
+		ArrayList<DriverRouteDetails> pendingRoutes = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			String sql = "SELECT r.rte_id, r.rte_date, " + "IFNULL(SUM(di.dli_total_weight), 0) AS total_weight "
+					+ "FROM route_rte r " + "LEFT JOIN route_delivery_rtd rd ON r.rte_id = rd.rtd_route_id "
+					+ "LEFT JOIN delivery_item_dli di ON rd.rtd_delivery_id = di.dli_delivery_id "
+					+ "WHERE r.rte_driver_id = ? AND r.rte_status = 'pending' " + "GROUP BY r.rte_id, r.rte_date "
+					+ "ORDER BY r.rte_date";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, driverId);
+
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				int routeId = rs.getInt("rte_id");
+				String date = rs.getString("rte_date");
+				int totalWeight = rs.getInt("total_weight");
+
+				pendingRoutes.add(new DriverRouteDetails(routeId, date, totalWeight));
+			}
+		} finally {
+			conn.close();
+		}
+
+		return pendingRoutes;
+	}
+
+	public ArrayList<DriverRouteDetails> getPastRoutesForDriver(int driverId) throws SQLException {
+		ArrayList<DriverRouteDetails> pendingRoutes = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			String sql = "SELECT r.rte_id, r.rte_date, " + "IFNULL(SUM(di.dli_total_weight), 0) AS total_weight "
+					+ "FROM route_rte r " + "LEFT JOIN route_delivery_rtd rd ON r.rte_id = rd.rtd_route_id "
+					+ "LEFT JOIN delivery_item_dli di ON rd.rtd_delivery_id = di.dli_delivery_id "
+					+ "WHERE r.rte_driver_id = ? AND r.rte_status <> 'pending' " + "GROUP BY r.rte_id, r.rte_date "
+					+ "ORDER BY r.rte_date";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, driverId);
+
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				int routeId = rs.getInt("rte_id");
+				String date = rs.getString("rte_date");
+				int totalWeight = rs.getInt("total_weight");
+
+				pendingRoutes.add(new DriverRouteDetails(routeId, date, totalWeight));
+			}
+		} finally {
+			conn.close();
+		}
+
+		return pendingRoutes;
+	}
+
+	public ArrayList<DeliveryDetails> getDeliveriesForRoute(int routeId) throws SQLException {
+		ArrayList<DeliveryDetails> deliveries = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			// Query to get deliveries for the given route ID
+			String sql = "SELECT d.dlv_id, d.dlv_date, d.dlv_address_line_1, d.dlv_zip_code, d.dlv_city, "
+					+ "SUM(di.dli_total_weight) AS total_weight " + "FROM route_delivery_rtd r "
+					+ "JOIN delivery_dlv d ON r.rtd_delivery_id = d.dlv_id "
+					+ "JOIN delivery_item_dli di ON d.dlv_id = di.dli_delivery_id " + "WHERE r.rtd_route_id = ? "
+					+ "GROUP BY d.dlv_id, d.dlv_date, d.dlv_address_line_1, d.dlv_zip_code, d.dlv_city "
+					+ "ORDER BY d.dlv_date DESC";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, routeId);
+
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				DeliveryDetails delivery = new DeliveryDetails();
+				delivery.setDeliveryId(rs.getInt("dlv_id"));
+				delivery.setDate(rs.getString("dlv_date"));
+				delivery.setAddressLine1(rs.getString("dlv_address_line_1"));
+				delivery.setZipCode(rs.getString("dlv_zip_code"));
+				delivery.setCity(rs.getString("dlv_city"));
+				delivery.setTotalWeight(rs.getInt("total_weight"));
+
+				deliveries.add(delivery);
+			}
+		} finally {
+			conn.close();
+		}
+
+		return deliveries;
+	}
+
+	public void markRouteAndDeliveriesAsDelivered(int routeId) throws SQLException {
+		Connection conn = createConnection();
+		conn.setAutoCommit(false); // Start transaction
+
+		try {
+			// Mark the route as delivered
+			String routeSql = "UPDATE route_rte SET rte_status = 'delivered' WHERE rte_id = ?";
+			PreparedStatement routeStmt = conn.prepareStatement(routeSql);
+			routeStmt.setInt(1, routeId);
+			int routeRowsUpdated = routeStmt.executeUpdate();
+
+			// Mark all deliveries in the route as delivered
+			String deliverySql = "UPDATE delivery_dlv SET dlv_status = 'delivered' "
+					+ "WHERE dlv_id IN (SELECT rtd_delivery_id FROM route_delivery_rtd WHERE rtd_route_id = ?)";
+			PreparedStatement deliveryStmt = conn.prepareStatement(deliverySql);
+			deliveryStmt.setInt(1, routeId);
+			int deliveryRowsUpdated = deliveryStmt.executeUpdate();
+
+			conn.commit(); // Commit the transaction
+			System.out.println(
+					"Route ID " + routeId + " marked as Delivered. " + deliveryRowsUpdated + " deliveries updated.");
+
+		} catch (SQLException e) {
+			conn.rollback(); // Rollback the transaction on error
+			throw e;
+		} finally {
+			conn.setAutoCommit(true); // Restore default commit behavior
 			conn.close();
 		}
 	}

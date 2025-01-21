@@ -141,6 +141,10 @@ public class ViewRoute extends JFrame implements ActionListener {
 		populateScrollablePanel(constraints, routeDeliveries);
 
 		this.setVisible(true);
+		
+		if (routeDeliveries.size() == 0) {
+			helper.showInfoMessage(this, "No data available for route", "");
+		}
 
 	}
 

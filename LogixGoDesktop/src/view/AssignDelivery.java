@@ -115,6 +115,10 @@ public class AssignDelivery extends JFrame implements ActionListener {
 
 		this.setVisible(true);
 
+		if (deliveries.size() == 0) {
+			helper.showInfoMessage(this, "No data available", "");
+		}
+
 	}
 
 	private JPanel createRow(JPanel scrollablePanel, String field1, String field2, String field3, int deliveryId) {

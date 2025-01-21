@@ -50,16 +50,23 @@ public class ViewParticularDelivery extends JFrame implements ActionListener {
 	static String[] products;
 
 	User user;
+	int destination;
+	int routeId;
+	int destination2;
 
 	DBManagement db = new DBManagement();
 	Helper helper = new Helper();
 	int user_id = SessionManager.getSession();
 	DeliveryDetails delivery;
 
-	public ViewParticularDelivery(int deliveryId) {
+	public ViewParticularDelivery(int deliveryId, int routeId, int destination, int destination2) {
 		try {
 			user = db.getUserById(user_id);
 			delivery = db.getDeliveryDetails(deliveryId);
+			this.destination = destination;
+			this.destination2 = destination2;
+			this.routeId = routeId;
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -150,6 +157,10 @@ public class ViewParticularDelivery extends JFrame implements ActionListener {
 
 		this.setVisible(true);
 
+		if (delivery.getProducts().size() == 0) {
+			helper.showInfoMessage(this, "No data available for delivery", "");
+		}
+
 	}
 
 	private JPanel createRow(JPanel scrollablePanel, String field1, int field2) {
@@ -190,8 +201,13 @@ public class ViewParticularDelivery extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == back) {
-			this.dispose();
-			new ViewDeliveries();
+			if (destination == 1) {
+				this.dispose();
+				new ViewDeliveries();
+			} else if (destination == 2) {
+				this.dispose();
+				new DriverViewDeliveries(routeId, destination2);
+			}
 		}
 
 	}

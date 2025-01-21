@@ -146,14 +146,16 @@ public class ChangePassword extends JFrame implements ActionListener {
 				return;
 			}
 
-			try {
-				db.updateUserPassword(user.getId(), snew_password);
+			if (helper.showConfirmDialog(this, "Are you sure you want to change your password?", "") == 0) {
+				try {
+					db.updateUserPassword(user.getId(), snew_password);
 
-				this.dispose();
-				new UpdateDetails();
+					this.dispose();
+					new UpdateDetails();
 
-			} catch (SQLException e1) {
-				e1.printStackTrace();
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
 			}
 
 		}

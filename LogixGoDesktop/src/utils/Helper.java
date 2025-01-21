@@ -21,6 +21,14 @@ public class Helper {
 		JOptionPane.showMessageDialog(context, message, "Attention!!", JOptionPane.ERROR_MESSAGE);
 	}
 
+	public void showInfoMessage(Component context, String message, String title) {
+		JOptionPane.showMessageDialog(context, message, title, JOptionPane.INFORMATION_MESSAGE);
+	}
+	
+	public int showConfirmDialog(Component context, String message, String title) {
+		return JOptionPane.showConfirmDialog(context, message, title, JOptionPane.YES_NO_OPTION);
+	}
+
 	public boolean isValidEmailAddress(String email) {
 		String ePattern = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$";
 		Pattern p = Pattern.compile(ePattern);

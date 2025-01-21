@@ -115,6 +115,10 @@ public class ViewDeliveries extends JFrame implements ActionListener {
 
 		this.setVisible(true);
 
+		if (deliveries.size() == 0) {
+			helper.showInfoMessage(this, "No data available", "");
+		}
+
 	}
 
 	private JPanel createRow(JPanel scrollablePanel, String field1, String field2, String field3, int deliveryId) {
@@ -147,7 +151,7 @@ public class ViewDeliveries extends JFrame implements ActionListener {
 		viewButton.setPreferredSize(new Dimension((int) (main_panel_width * 0.15), entry_layout_height - 30));
 		viewButton.addActionListener(e -> {
 			this.dispose();
-			new ViewParticularDelivery(deliveryId);
+			new ViewParticularDelivery(deliveryId, 0, 1, 0);
 		});
 
 		rowPanel.add(label1);

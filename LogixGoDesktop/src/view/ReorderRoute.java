@@ -158,6 +158,10 @@ public class ReorderRoute extends JFrame implements ActionListener {
 
 		this.setVisible(true);
 
+		if (routeDeliveries.size() == 0) {
+			helper.showInfoMessage(this, "No data available for route", "");
+		}
+
 	}
 
 	private JPanel createRow(JPanel scrollablePanel, String address, int order, int deliveryId) {
