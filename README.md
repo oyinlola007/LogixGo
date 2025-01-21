@@ -1,7 +1,7 @@
-# LogixGo: Logistics Route Management System
+# LogixGo
 
 ## Overview
-The Logistics Route Management System is a robust solution designed to streamline the management of deliveries, routes, and drivers for logistics companies. This project focuses on integrating advanced technologies for seamless operation management, data handling, and reporting.
+LogixGo is a robust solution designed to streamline the management of deliveries, routes, and drivers for logistics companies. This project focuses on integrating advanced technologies for seamless operation management, data handling, and reporting.
 
 ## Key Features
 - Efficient database management with **MySQL** for data storage and retrieval.
@@ -51,8 +51,8 @@ This functionality is powered by **Apache POI**, enabling easy exportation of da
 ## How to Run
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/logistics-route-management.git
-   cd logistics-route-management
+   git clone https://github.com/oyinlola007/LogixGo.git
+   ```
 
 2. Set up the database:
 - Import the provided schema.sql into your MySQL server.
