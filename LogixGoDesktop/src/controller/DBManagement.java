@@ -11,6 +11,7 @@ import java.util.List;
 import model.DeliveryDetails;
 import model.Driver;
 import model.DriverRouteDetails;
+import model.Mission;
 import model.ProductDetails;
 import model.RouteDeliveryDetails;
 import model.RouteDetails;
@@ -712,7 +713,6 @@ public class DBManagement {
 			String routeSql = "UPDATE route_rte SET rte_status = 'delivered' WHERE rte_id = ?";
 			PreparedStatement routeStmt = conn.prepareStatement(routeSql);
 			routeStmt.setInt(1, routeId);
-			int routeRowsUpdated = routeStmt.executeUpdate();
 
 			// Mark all deliveries in the route as delivered
 			String deliverySql = "UPDATE delivery_dlv SET dlv_status = 'delivered' "
@@ -734,4 +734,80 @@ public class DBManagement {
 		}
 	}
 
+	public ArrayList<Mission> getMissionsForDate(String date) throws SQLException {
+		ArrayList<Mission> missions = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			String warehouseAddress = getConstantValue("warehouse_address");
+
+			String sql = "SELECT r.rte_id, CONCAT(u.usr_first_name, ' ', u.usr_last_name) AS driver_name, "
+					+ "d.dlv_address_line_1, d.dlv_zip_code, d.dlv_city " + "FROM route_rte r "
+					+ "JOIN driver_drv drv ON r.rte_driver_id = drv.drv_id "
+					+ "JOIN user_usr u ON drv.drv_id = u.usr_id "
+					+ "LEFT JOIN route_delivery_rtd rd ON r.rte_id = rd.rtd_route_id "
+					+ "LEFT JOIN delivery_dlv d ON rd.rtd_delivery_id = d.dlv_id " + "WHERE r.rte_date = ? "
+					+ "ORDER BY r.rte_id, rd.rtd_order";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, date);
+
+			try (ResultSet rs = pstmt.executeQuery()) {
+				Mission currentMission = null;
+				String currentRouteId = null;
+
+				while (rs.next()) {
+					String routeId = rs.getString("rte_id");
+					String driverName = rs.getString("driver_name");
+
+					// Start a new mission for a new route
+					if (!routeId.equals(currentRouteId)) {
+						if (currentMission != null && !currentMission.getDeliveryAddresses().isEmpty()) {
+							missions.add(currentMission);
+						}
+						currentMission = new Mission(date, driverName, warehouseAddress, new ArrayList<>());
+						currentRouteId = routeId;
+					}
+
+					// Add delivery address if present
+					String deliveryAddress = rs.getString("dlv_address_line_1");
+					if (deliveryAddress != null) {
+						currentMission.getDeliveryAddresses().add(deliveryAddress + ", " + rs.getString("dlv_city")
+								+ " (" + rs.getString("dlv_zip_code") + ")");
+					}
+				}
+
+				// Add the last mission if it has delivery addresses
+				if (currentMission != null && !currentMission.getDeliveryAddresses().isEmpty()) {
+					missions.add(currentMission);
+				}
+			}
+		} finally {
+			conn.close();
+		}
+
+		return missions;
+	}
+
+	public ArrayList<String> getUniqueDatesWithRoutes() throws SQLException {
+		ArrayList<String> dates = new ArrayList<>();
+		Connection conn = createConnection();
+
+		try {
+			String sql = "SELECT DISTINCT r.rte_date " + "FROM route_rte r "
+					+ "JOIN route_delivery_rtd rd ON r.rte_id = rd.rtd_route_id "
+					+ "WHERE rd.rtd_delivery_id IS NOT NULL " + "ORDER BY r.rte_date";
+
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				dates.add(rs.getString("rte_date"));
+			}
+		} finally {
+			conn.close();
+		}
+
+		return dates;
+	}
 }

@@ -198,8 +198,24 @@ public class Routes extends JFrame implements ActionListener {
 		}
 
 		if (e.getSource() == generateDoc) {
-//			this.dispose();
-//			new CreateNewRoute(delivery);
+
+			String title = "Generate mission document";
+			String message = "Please select a date from the available options to generate the mission document:";
+			ArrayList<String> dates;
+			try {
+				dates = db.getUniqueDatesWithRoutes();
+				String date = helper.showConfirmDialogWithDropDown(this, message, title, dates);
+
+				if (date != null) {
+					String absolutePath = WordFileGenerator.generateMissionDocument(db.getMissionsForDate(date),
+							"Missions.docx");
+					helper.showInfoMessage(this, "Schedule document successfully generated at " + absolutePath, "");
+				}
+
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+
 		}
 	}
 
