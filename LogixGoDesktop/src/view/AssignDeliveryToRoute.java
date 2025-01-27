@@ -150,7 +150,7 @@ public class AssignDeliveryToRoute extends JFrame implements ActionListener {
 		this.setVisible(true);
 
 		if (routesForDay.size() == 0) {
-			helper.showInfoMessage(this, "No data available for routes", "");
+			helper.showInfoMessage(this, "No route available for delivery. Create new route", "");
 		}
 
 	}

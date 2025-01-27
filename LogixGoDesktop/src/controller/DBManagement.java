@@ -488,7 +488,7 @@ public class DBManagement {
 					+ "JOIN driver_drv d ON r.rte_driver_id = d.drv_id " + "JOIN user_usr u ON d.drv_id = u.usr_id "
 					+ "LEFT JOIN route_delivery_rtd rd ON r.rte_id = rd.rtd_route_id "
 					+ "LEFT JOIN delivery_item_dli di ON rd.rtd_delivery_id = di.dli_delivery_id "
-					+ "WHERE r.rte_status = 'Pending' "
+					//+ "WHERE r.rte_status = 'Pending' "
 					+ "GROUP BY r.rte_id, r.rte_date, driver_name, d.drv_truck_capacity " + "ORDER BY r.rte_id";
 
 			PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -713,6 +713,7 @@ public class DBManagement {
 			String routeSql = "UPDATE route_rte SET rte_status = 'delivered' WHERE rte_id = ?";
 			PreparedStatement routeStmt = conn.prepareStatement(routeSql);
 			routeStmt.setInt(1, routeId);
+			int routeStmtUpdated = routeStmt.executeUpdate();
 
 			// Mark all deliveries in the route as delivered
 			String deliverySql = "UPDATE delivery_dlv SET dlv_status = 'delivered' "

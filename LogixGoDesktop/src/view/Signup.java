@@ -189,7 +189,7 @@ public class Signup extends JFrame implements ActionListener {
 			// validate email not exist
 			try {
 				if (db.doesEmailExist(semail)) {
-					helper.showErrorMessage(this, "Email already exists");
+					helper.showErrorMessage(this, "Email already exist");
 					return;
 				}
 			} catch (SQLException e1) {
