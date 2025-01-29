@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jan 21, 2025 at 05:00 PM
+-- Generation Time: Jan 29, 2025 at 12:55 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -62,15 +62,13 @@ CREATE TABLE `delivery_dlv` (
 --
 
 INSERT INTO `delivery_dlv` (`dlv_id`, `dlv_usr_id`, `dlv_date`, `dlv_status`, `dlv_address_line_1`, `dlv_address_line_2`, `dlv_city`, `dlv_region`, `dlv_zip_code`) VALUES
-(2, 4, '2025-01-30', 'delivered', '1 Victor Hugo', 'Appart 12', 'Lyon', 'Alps', '12345'),
-(3, 4, '2025-01-30', 'delivered', '87 Rue St Sever', 'Appart 66', 'Rouen', 'Normandy', '87500'),
-(4, 4, '2025-01-30', 'delivered', '15 rue Monte Carlo', 'Appart 5', 'Marseille', 'Normandy', '86000'),
-(5, 4, '2025-01-30', 'pending', '36 rue Lafayette', 'House 12', 'Rouen', 'Normandy', '86710'),
-(6, 7, '2025-02-02', 'pending', '124 rue Jean Zay', 'Sotteville', 'Grenoble', 'Alps', '65200'),
-(7, 7, '2025-02-01', 'pending', '43 rue Garibaldi', 'Parc au princes', 'Nantes', 'Normandy', '66203'),
-(8, 7, '2025-01-30', 'pending', '15 rue st Julien', 'Europe', 'St Etienne', 'Paris', '76500'),
-(9, 4, '2025-02-02', 'pending', '14 rue st Sever', 'Appart 64', 'Rouen', 'Normandy', '87600'),
-(10, 4, '2025-02-02', 'pending', '56 rue Mark Heny', 'Appart 34', 'Turin', 'Florence', '63544');
+(13, 4, '2025-02-07', 'pending', '97 rue Toit Familial', 'Appart 23', 'Rouen', 'Normandy', '97200'),
+(14, 4, '2025-02-07', 'pending', '12 rue St Sever', 'Appart 43', 'Rouen', 'Normandy', '87200'),
+(15, 4, '2025-02-08', 'pending', '87 Rue Lafayette', 'Appart 83', 'Rouen', 'Normandy', '65200'),
+(16, 4, '2025-02-08', 'pending', '24 rue Europe', 'Appart 12', 'Rouen', 'Normandy', '88200'),
+(17, 11, '2025-02-02', 'pending', 'Shazam 001', 'jhdfhnc', 'abuja', 'north', '55555'),
+(18, 11, '2025-02-02', 'pending', 'Shaker ', 'iujwfhow', 'Lagos', 'West', '66666'),
+(19, 11, '2025-02-02', 'pending', 'dnjwjdn', 'djcnjnc', 'fiojeo', 'fjoek', '55555');
 
 -- --------------------------------------------------------
 
@@ -89,35 +87,34 @@ CREATE TABLE `delivery_item_dli` (
 --
 
 INSERT INTO `delivery_item_dli` (`dli_delivery_id`, `dli_product_id`, `dli_total_weight`) VALUES
-(2, 1, 5),
-(2, 4, 2),
-(3, 1, 30),
-(3, 2, 2),
-(3, 3, 12),
-(3, 4, 25),
-(4, 1, 10),
-(4, 3, 13),
-(5, 1, 80),
-(5, 2, 6),
-(5, 3, 1),
-(5, 4, 100),
-(6, 2, 10),
-(6, 3, 3),
-(6, 5, 2),
-(6, 7, 20),
-(6, 8, 4),
-(6, 11, 6),
-(7, 1, 30),
-(7, 6, 3),
-(7, 9, 8),
-(7, 10, 4),
-(8, 2, 6),
-(8, 10, 50),
-(9, 1, 115),
-(9, 12, 2),
-(9, 13, 10),
-(10, 1, 500),
-(10, 10, 100);
+(13, 1, 10),
+(13, 2, 10),
+(13, 3, 6),
+(13, 9, 13),
+(13, 10, 30),
+(13, 12, 4),
+(14, 2, 12),
+(14, 3, 4),
+(14, 4, 7),
+(14, 5, 3),
+(14, 8, 5),
+(15, 1, 250),
+(15, 6, 4),
+(15, 7, 2),
+(15, 9, 10),
+(16, 2, 80),
+(16, 3, 20),
+(16, 5, 10),
+(16, 8, 30),
+(16, 11, 50),
+(17, 2, 6),
+(17, 3, 13),
+(17, 8, 2),
+(17, 10, 4),
+(17, 11, 5),
+(18, 8, 10),
+(18, 10, 6),
+(19, 3, 2);
 
 -- --------------------------------------------------------
 
@@ -136,8 +133,8 @@ CREATE TABLE `driver_drv` (
 --
 
 INSERT INTO `driver_drv` (`drv_id`, `drv_truck_registration`, `drv_truck_capacity`) VALUES
-(5, 'a1b2c3d4', 150),
-(8, 'C2D234', 850);
+(10, 'C172F', 500),
+(13, '63367738', 140);
 
 -- --------------------------------------------------------
 
@@ -187,13 +184,8 @@ CREATE TABLE `route_delivery_rtd` (
 --
 
 INSERT INTO `route_delivery_rtd` (`rtd_route_id`, `rtd_delivery_id`, `rtd_order`) VALUES
-(1, 2, 1),
-(1, 3, 3),
-(1, 4, 2),
-(4, 5, 2),
-(4, 8, 1),
-(5, 6, 1),
-(5, 9, 2);
+(10, 15, 2),
+(10, 16, 1);
 
 -- --------------------------------------------------------
 
@@ -213,11 +205,7 @@ CREATE TABLE `route_rte` (
 --
 
 INSERT INTO `route_rte` (`rte_id`, `rte_date`, `rte_driver_id`, `rte_status`) VALUES
-(1, '2025-01-30', 5, 'delivered'),
-(3, '2025-01-30', 5, 'pending'),
-(4, '2025-01-30', 8, 'pending'),
-(5, '2025-02-02', 8, 'pending'),
-(6, '2025-02-02', 5, 'pending');
+(10, '2025-02-08', 10, 'pending');
 
 -- --------------------------------------------------------
 
@@ -241,10 +229,11 @@ CREATE TABLE `user_usr` (
 
 INSERT INTO `user_usr` (`usr_id`, `usr_first_name`, `usr_last_name`, `usr_email`, `usr_phone_number`, `usr_password`, `usr_role`) VALUES
 (4, 'Bob', 'Joe', 'customer@gmail.com', '0123456781', 'pw', 'Customer'),
-(5, 'Ann', 'Jane', 'driver@gmail.com', '1122334455', 'pw', 'Driver'),
 (6, 'Sam', 'Smith', 'scheduler@gmail.com', '1232456595', 'pw', 'Scheduler'),
-(7, 'Billy', 'Jean', 'customer2@gmail.com', '1293745367', 'pw', 'Customer'),
-(8, 'Santa', 'Claus', 'driver2@gmail.com', '1234383733', 'pw', 'Driver');
+(10, 'Ann', 'Jane', 'driver@gmail.com', '0263524238', 'pw', 'Driver'),
+(11, 'test', 'ezzy', 'test1@test.com', '2233445566', 'tttttttt', 'Customer'),
+(12, 'test2', 'ezzy', 'tes@tes.com', '2345678912', 'bbbbbbbb', 'Scheduler'),
+(13, 'test3', 'ezzy', 'te@te.com', '2345678912', 'GGGGGGGG', 'Driver');
 
 --
 -- Indexes for dumped tables
@@ -313,7 +302,7 @@ ALTER TABLE `user_usr`
 -- AUTO_INCREMENT for table `delivery_dlv`
 --
 ALTER TABLE `delivery_dlv`
-  MODIFY `dlv_id` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `dlv_id` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `product_prd`
@@ -325,13 +314,13 @@ ALTER TABLE `product_prd`
 -- AUTO_INCREMENT for table `route_rte`
 --
 ALTER TABLE `route_rte`
-  MODIFY `rte_id` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `rte_id` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `user_usr`
 --
 ALTER TABLE `user_usr`
-  MODIFY `usr_id` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `usr_id` int(5) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- Constraints for dumped tables
